@@ -95,6 +95,40 @@ contract AdenoTest is Test {
         vm.stopPrank();
     }
 
+    function testPause() public {
+        address user2 = vm.addr(0x6);
+        adenoToken.mint(user, 200e18);
+        hoax(user);
+        adenoToken.transfer(user2, 10e18);
+        hoax(user);
+        adenoToken.approve(user2, 50e18);
+        assertEq(adenoToken.balanceOf(user), 190e18);
+        assertEq(adenoToken.balanceOf(user2), 10e18);
+        assertEq(adenoToken.allowance(user, user2), 50e18);
+        hoax(user2);
+        adenoToken.transferFrom(user, treasury, 10e18);
+        assertEq(adenoToken.balanceOf(user), 180e18);
+        assertEq(adenoToken.allowance(user, user2), 40e18);
+        hoax(user);
+        adenoToken.approve(user2, 70e18);
+        assertEq(adenoToken.allowance(user, user2), 70e18);
+        adenoToken.pause();
+        vm.expectRevert("Pausable: paused");
+        adenoToken.mint(user, 200e18);
+        vm.expectRevert("Pausable: paused");
+        adenoToken.transfer(user2, 10e18);
+        vm.expectRevert("Pausable: paused");
+        hoax(user);
+        adenoToken.approve(user2, 100e18);
+        vm.expectRevert("Pausable: paused");
+        hoax(user2);
+        adenoToken.transferFrom(user, treasury, 10e18);
+
+        assertEq(adenoToken.balanceOf(user), 180e18);
+        assertEq(adenoToken.balanceOf(user2), 10e18);
+        assertEq(adenoToken.allowance(user, user2), 70e18);
+    }
+
     function testTransferOwnership() public {
         address user2 = vm.addr(0x6);
         adenoToken.transferOwnership(user2);
